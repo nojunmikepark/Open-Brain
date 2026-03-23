@@ -121,6 +121,18 @@
   <div id="rs"></div>
 </div>
 <script>
+(function() {
+  const stored = sessionStorage.getItem("ob_auth");
+  if (stored !== "ok") {
+    const pw = prompt("Password:");
+    if (pw !== "MikeParkNotes1!") {
+      document.body.innerHTML = "<p style='font-family:sans-serif;padding:40px;color:#999'>Access denied.</p>";
+      throw new Error("Unauthorized");
+    }
+    sessionStorage.setItem("ob_auth", "ok");
+  }
+})();
+
 const MCP = "https://rczxednrbqmhzyucjaah.supabase.co/functions/v1/open-brain-mcp-remote/mcp";
 const STORAGE_KEYS = {
   domain: "openbrain.domain",
