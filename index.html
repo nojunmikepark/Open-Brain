@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Brain</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f3; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; }
+  .card { background: white; border-radius: 12px; border: 1px solid #e5e5e3; padding: 28px; width: 100%; max-width: 560px; }
+  h1 { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 20px; }
+  textarea { width: 100%; min-height: 130px; resize: vertical; font-family: inherit; font-size: 16px; line-height: 1.6; padding: 14px 16px; border: 1px solid #ddd; border-radius: 10px; background: #fafaf9; color: #1a1a1a; -webkit-appearance: none; }
+  textarea:focus { outline: none; border-color: #999; background: white; }
+  textarea::placeholder { color: #aaa; }
+  .section-label { font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: #8a8a86; margin-top: 14px; margin-bottom: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { min-height: 40px; padding: 9px 15px; border-radius: 20px; font-size: 14px; border: 1px solid #ddd; background: white; color: #666; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+  .chip.active { background: #1a1a1a; border-color: #1a1a1a; color: white; }
+  .chip.subtle.active { background: #f0f0ee; border-color: #d8d8d4; color: #1a1a1a; }
+  .row { display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  #submit { min-height: 44px; padding: 11px 24px; border-radius: 10px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; border: none; background: #1a1a1a; color: white; }
+  #submit:disabled { background: #ccc; cursor: not-allowed; }
+  #status { font-size: 14px; color: #888; }
+  #status.ok { color: #2d8a4e; }
+  #status.err { color: #c0392b; }
+  .shortcut { font-size: 12px; color: #bbb; margin-left: auto; }
+  hr { border: none; border-top: 1px solid #eee; margin: 24px 0; }
+  .search-row { display: flex; gap: 8px; align-items: stretch; }
+  input[type="text"] { flex: 1; min-width: 0; min-height: 44px; padding: 11px 13px; font-size: 16px; font-family: inherit; border: 1px solid #ddd; border-radius: 10px; background: #fafaf9; color: #1a1a1a; -webkit-appearance: none; }
+  input[type="text"]:focus { outline: none; border-color: #999; }
+  input[type="text"]::placeholder { color: #aaa; }
+  .sbtn { min-height: 44px; padding: 10px 16px; font-size: 14px; font-family: inherit; border: 1px solid #ddd; border-radius: 10px; background: white; color: #444; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .filters { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .results { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .rc { border: 1px solid #eee; border-radius: 8px; padding: 12px 14px; background: #fafaf9; }
+  .rm { font-size: 12px; color: #aaa; margin-bottom: 5px; }
+  .rb { font-size: 14px; color: #1a1a1a; line-height: 1.6; white-space: pre-wrap; }
+  #rs { font-size: 13px; color: #aaa; margin-top: 10px; min-height: 18px; }
+
+  @media (max-width: 640px) {
+    body { padding: 14px 10px 24px; }
+    .card { padding: 16px; border-radius: 0; max-width: 100%; min-height: calc(100vh - 28px); }
+    h1 { font-size: 17px; margin-bottom: 16px; }
+    textarea { min-height: 160px; }
+    .section-label { margin-top: 16px; }
+    .chip { font-size: 15px; padding: 10px 14px; }
+    .search-row { flex-wrap: wrap; }
+    .search-row input[type="text"] { width: 100%; flex: 1 0 100%; }
+    .sbtn { flex: 1 1 0; }
+    #submit { width: 100%; }
+    .shortcut { width: 100%; margin-left: 0; color: #999; }
+    #status { width: 100%; order: 3; }
+    .rc { padding: 13px 14px; border-radius: 10px; }
+    .rm { font-size: 12px; line-height: 1.4; }
+    .rb { font-size: 15px; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #141414; }
+    .card { background: #1e1e1e; border-color: #2e2e2e; }
+    h1 { color: #f0f0f0; }
+    textarea { background: #161616; border-color: #2e2e2e; color: #f0f0f0; }
+    textarea:focus { background: #1a1a1a; border-color: #555; }
+    .section-label { color: #7f7f7a; }
+    .chip { background: #1e1e1e; border-color: #2e2e2e; color: #888; }
+    .chip.active { background: #f0f0f0; border-color: #f0f0f0; color: #1a1a1a; }
+    .chip.subtle.active { background: #2c2c2c; border-color: #444; color: #f0f0f0; }
+    #submit { background: #f0f0f0; color: #1a1a1a; }
+    #submit:disabled { background: #333; color: #666; }
+    hr { border-color: #2e2e2e; }
+    input[type="text"] { background: #161616; border-color: #2e2e2e; color: #f0f0f0; }
+    .sbtn { background: #1e1e1e; border-color: #2e2e2e; color: #888; }
+    .rc { background: #161616; border-color: #2e2e2e; }
+    .rb { color: #e0e0e0; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Open Brain</h1>
+  <textarea id="thought" placeholder="Capture something worth remembering..." autofocus></textarea>
+
+  <div class="section-label">Domain</div>
+  <div class="chips" id="domainChips">
+    <button class="chip" data-d="General">General</button>
+    <button class="chip" data-d="Teaching">Teaching</button>
+    <button class="chip" data-d="Open Brain">Open Brain</button>
+    <button class="chip" data-d="App">App</button>
+    <button class="chip" data-d="Acting/Writing">Acting/Writing</button>
+    <button class="chip" data-d="Personal">Personal</button>
+  </div>
+
+  <div class="section-label">Type <span style="font-weight:400; text-transform:none; letter-spacing:0;">(optional)</span></div>
+  <div class="chips" id="typeChips">
+    <button class="chip subtle active" data-t="">None</button>
+    <button class="chip subtle" data-t="Try">Try</button>
+    <button class="chip subtle" data-t="Chose">Chose</button>
+    <button class="chip subtle" data-t="Problem">Problem</button>
+    <button class="chip subtle" data-t="Remember">Remember</button>
+    <button class="chip subtle" data-t="Noticed">Noticed</button>
+  </div>
+
+  <div class="row">
+    <button id="submit" onclick="deposit()" disabled>Deposit</button>
+    <span id="status"></span>
+    <span class="shortcut">⌘ Return</span>
+  </div>
+
+  <hr>
+
+  <div class="search-row">
+    <input type="text" id="q" placeholder="Search memories..." onkeydown="if(event.key==='Enter')search()">
+    <button class="sbtn" onclick="search()">Search</button>
+    <button class="sbtn" onclick="recent()">Recent</button>
+  </div>
+  <div class="filters" id="scopeFilters">
+    <button class="chip subtle active" data-scope="all">All</button>
+    <button class="chip subtle" data-scope="current">Current Domain</button>
+  </div>
+  <div class="results" id="results"></div>
+  <div id="rs"></div>
+</div>
+<script>
+const MCP = "https://rczxednrbqmhzyucjaah.supabase.co/functions/v1/open-brain-mcp-remote/mcp";
+const STORAGE_KEYS = {
+  domain: "openbrain.domain",
+  type: "openbrain.type",
+  scope: "openbrain.scope"
+};
+
+const ta = document.getElementById("thought");
+const btn = document.getElementById("submit");
+const st = document.getElementById("status");
+const rs = document.getElementById("rs");
+const resultsEl = document.getElementById("results");
+
+let domain = localStorage.getItem(STORAGE_KEYS.domain) || "Teaching";
+let type = localStorage.getItem(STORAGE_KEYS.type) || "";
+let scope = localStorage.getItem(STORAGE_KEYS.scope) || "all";
+let toolNames = new Set();
+let toolsReady = false;
+
+const depositToolCandidates = [
+  ["add_thought", "content"],
+  ["store_thought", "thought"],
+  ["create_thought", "content"],
+  ["save_thought", "content"]
+];
+const searchToolName = "search_thoughts";
+const recentToolName = "recent_thoughts";
+
+function setStatus(text = "", cls = "") {
+  st.textContent = text;
+  st.className = cls;
+}
+
+function updateSubmitState() {
+  btn.disabled = !ta.value.trim();
+}
+
+function syncActiveChip(groupSelector, attr, value, activeClass = "active") {
+  document.querySelectorAll(groupSelector).forEach(chip => {
+    chip.classList.toggle(activeClass, chip.dataset[attr] === value);
+  });
+}
+
+function initChipHandlers() {
+  document.querySelectorAll("#domainChips .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      domain = chip.dataset.d;
+      localStorage.setItem(STORAGE_KEYS.domain, domain);
+      syncActiveChip("#domainChips .chip", "d", domain);
+    });
+  });
+
+  document.querySelectorAll("#typeChips .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      type = chip.dataset.t || "";
+      localStorage.setItem(STORAGE_KEYS.type, type);
+      syncActiveChip("#typeChips .chip", "t", type);
+    });
+  });
+
+  document.querySelectorAll("#scopeFilters .chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      scope = chip.dataset.scope;
+      localStorage.setItem(STORAGE_KEYS.scope, scope);
+      syncActiveChip("#scopeFilters .chip", "scope", scope);
+      const currentCards = window.__lastItems || [];
+      if (currentCards.length) render(currentCards, "No results.");
+    });
+  });
+}
+
+async function rpc(payload) {
+  const response = await fetch(MCP, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json, text/event-stream" },
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message || "Request failed.");
+  return data.result;
+}
+
+async function postTool(name, args) {
+  return rpc({
+    jsonrpc: "2.0",
+    id: Date.now(),
+    method: "tools/call",
+    params: { name, arguments: args }
+  });
+}
+
+async function loadTools() {
+  try {
+    const result = await rpc({ jsonrpc: "2.0", id: Date.now(), method: "tools/list", params: {} });
+    const list = result?.tools || [];
+    toolNames = new Set(list.map(t => t.name).filter(Boolean));
+    toolsReady = true;
+  } catch {
+    toolNames = new Set();
+    toolsReady = false;
+  }
+}
+
+function chosenDepositTools() {
+  if (!toolsReady || toolNames.size === 0) return depositToolCandidates;
+  return depositToolCandidates.filter(([name]) => toolNames.has(name));
+}
+
+function decorateContent(text) {
+  const pieces = [`[${domain}]`];
+  if (type) pieces.push(`[${type}]`);
+  pieces.push(text.trim());
+  return pieces.join(" ");
+}
+
+function extractMeta(raw) {
+  const matches = [...String(raw || "").matchAll(/\[([^\]]+)\]/g)].map(m => m[1]);
+  const body = String(raw || "").replace(/^(\[[^\]]+\]\s*)+/, "").trim();
+  return {
+    domain: matches[0] || "",
+    type: matches[1] || "",
+    body
+  };
+}
+
+function parse(result) {
+  const text = result?.content?.[0]?.text || "";
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text.split("\n").filter(Boolean).map((content, i) => ({ id: i, content }));
+  }
+}
+
+function filteredItems(items) {
+  if (scope !== "current") return items;
+  return items.filter(item => {
+    const raw = typeof item === "string" ? item : (item.content || item.thought || "");
+    return extractMeta(raw).domain === domain;
+  });
+}
+
+function render(items, emptyText) {
+  window.__lastItems = items || [];
+  const filtered = filteredItems(items || []);
+  if (!filtered.length) {
+    resultsEl.innerHTML = "";
+    rs.textContent = emptyText || "No results.";
+    return;
+  }
+
+  rs.textContent = scope === "current" ? `Showing ${filtered.length} in ${domain}.` : "";
+  resultsEl.innerHTML = filtered.map(item => {
+    const raw = typeof item === "string" ? item : (item.content || item.thought || "");
+    const meta = extractMeta(raw);
+    const score = item.score || item.similarity;
+    const pct = score ? `${Math.round(score * 100)}% · ` : "";
+    const date = item.created_at ? new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+    const labels = [meta.domain, meta.type].filter(Boolean).join(" · ");
+    return `<div class="rc"><div class="rm">${labels ? labels + " · " : ""}${pct}${date}</div><div class="rb">${meta.body}</div></div>`;
+  }).join("");
+}
+
+async function deposit() {
+  const text = ta.value.trim();
+  if (!text) return;
+
+  btn.disabled = true;
+  setStatus("Saving...");
+
+  const content = decorateContent(text);
+  const candidates = chosenDepositTools();
+  let saved = false;
+
+  for (const [name, key] of candidates) {
+    try {
+      await postTool(name, { [key]: content });
+      saved = true;
+      break;
+    } catch {
+      // try next candidate
+    }
+  }
+
+  if (saved) {
+    ta.value = "";
+    updateSubmitState();
+    setStatus("Saved.", "ok");
+    setTimeout(() => setStatus(""), 2500);
+    return;
+  }
+
+  setStatus("Could not save. Check the MCP tool name or endpoint.", "err");
+  updateSubmitState();
+}
+
+async function search() {
+  const q = document.getElementById("q").value.trim();
+  if (!q) return;
+
+  rs.textContent = "Searching...";
+  resultsEl.innerHTML = "";
+
+  try {
+    render(parse(await postTool(searchToolName, { q, limit: 12 })), "No results.");
+  } catch {
+    rs.textContent = "Could not search Open Brain.";
+  }
+}
+
+async function recent() {
+  rs.textContent = "Loading...";
+  resultsEl.innerHTML = "";
+
+  try {
+    render(parse(await postTool(recentToolName, { limit: 12 })), "No thoughts stored yet.");
+  } catch {
+    rs.textContent = "Could not load recent thoughts.";
+  }
+}
+
+ta.addEventListener("input", updateSubmitState);
+document.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    e.preventDefault();
+    if (!btn.disabled) deposit();
+  }
+});
+
+syncActiveChip("#domainChips .chip", "d", domain);
+syncActiveChip("#typeChips .chip", "t", type);
+syncActiveChip("#scopeFilters .chip", "scope", scope);
+initChipHandlers();
+updateSubmitState();
+loadTools();
+</script>
+</body>
+</html>
